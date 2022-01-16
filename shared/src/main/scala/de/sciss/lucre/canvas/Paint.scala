@@ -1,5 +1,5 @@
 /*
- *  Shape.scala
+ *  Paint.scala
  *  (Lucre2D)
  *
  *  Copyright (c) 2022 Hanns Holger Rutz. All rights reserved.
@@ -13,4 +13,13 @@
 
 package de.sciss.lucre.canvas
 
-trait Shape extends Graphics.Elem
+import de.sciss.lucre.expr.graph.{Const, Ex}
+
+object Color {
+  def red   : Ex[Color] = Const(new Color {})
+  def green : Ex[Color] = Const(new Color {})
+  def blue  : Ex[Color] = Const(new Color {})
+}
+trait Color extends Paint
+
+sealed trait Paint

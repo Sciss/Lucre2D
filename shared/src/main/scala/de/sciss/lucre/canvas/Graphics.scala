@@ -13,6 +13,7 @@
 
 package de.sciss.lucre.canvas
 
+import de.sciss.lucre.canvas.Graphics.Elem
 import de.sciss.lucre.expr.graph.Ex
 
 object Graphics {
@@ -20,4 +21,4 @@ object Graphics {
 
   def apply(elem: Ex[Elem]*): Graphics = Graphics(elem: Ex[Seq[Elem]])
 }
-case class Graphics(/*width: Ex[Double], height: Ex[Double], */ elem: Ex[Seq[Graphics.Elem]])
+case class Graphics(/*width: Ex[Double], height: Ex[Double], */ elem: Ex[Seq[Elem]])

@@ -1,5 +1,5 @@
 /*
- *  Shape.scala
+ *  Presentation.scala
  *  (Lucre2D)
  *
  *  Copyright (c) 2022 Hanns Holger Rutz. All rights reserved.
@@ -13,4 +13,8 @@
 
 package de.sciss.lucre.canvas
 
-trait Shape extends Graphics.Elem
+import de.sciss.lucre.expr.graph.Ex
+
+sealed trait Presentation
+
+case class Fill(color: Ex[Paint]) extends Presentation
