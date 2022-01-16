@@ -11,11 +11,11 @@
  *	contact@sciss.de
  */
 
-package de.sciss.lucre.canvas
+package de.sciss.lucre.canvas.graph
 
-import de.sciss.lucre.{IExpr, Txn}
 import de.sciss.lucre.expr.Context
 import de.sciss.lucre.expr.graph.{Const, Ex, UnaryOp}
+import de.sciss.lucre.{IExpr, Txn}
 
 import scala.language.implicitConversions
 
@@ -24,22 +24,26 @@ object AutoLen {
 
   def apply(): Ex[AutoLen] = Apply()
 
-  private object Impl extends AutoLen
+  case object Value extends AutoLen
 
   private final case class Apply() extends Ex[AutoLen] {
     type Repr[T <: Txn[T]] = IExpr[T, AutoLen]
 
     override protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] =
-      new Const.Expanded(Impl)
+      new Const.Expanded(Value)
   }
 }
+/** An `AutoLen` can be either a `Len` or `AutoLen.Value` */
 sealed trait AutoLen
 
 object Len {
 }
+/** A `Len` can be either a `Length` or a `Fraction`. */
 sealed trait Len extends AutoLen
 
 object Length {
+//  def unapply(px: Px): Boolean = true
+
   object Px {
     def apply(n: Ex[Double]): Ex[Px] = Apply(n)
 
@@ -65,7 +69,7 @@ object Fraction {
   def apply(p: Ex[Double]): Ex[Fraction] = Apply(p)
 
   private final case class Op() extends UnaryOp.Op[Double, Fraction] {
-    override def apply(p: Double): Fraction = Fraction(p)
+    override def apply(p: Double): Fraction = Fraction(p * 0.01)
   }
 
   private final case class Apply(p: Ex[Double]) extends Ex[Fraction] {
@@ -78,7 +82,7 @@ object Fraction {
     }
   }
 }
-case class Fraction(p: Double) extends Len
+case class Fraction private[lucre](f: Double) extends Len
 
 object % {
   // XXX TODO: should change Lucre to promote Int to Double

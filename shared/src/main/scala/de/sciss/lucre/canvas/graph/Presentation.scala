@@ -1,5 +1,5 @@
 /*
- *  Graphics.scala
+ *  Presentation.scala
  *  (Lucre2D)
  *
  *  Copyright (c) 2022 Hanns Holger Rutz. All rights reserved.
@@ -11,14 +11,10 @@
  *	contact@sciss.de
  */
 
-package de.sciss.lucre.canvas
+package de.sciss.lucre.canvas.graph
 
-import de.sciss.lucre.canvas.Graphics.Elem
 import de.sciss.lucre.expr.graph.Ex
 
-object Graphics {
-  trait Elem
+sealed trait Presentation
 
-  def apply(elem: Ex[Elem]*): Graphics = Graphics(elem: Ex[Seq[Elem]])
-}
-case class Graphics(/*width: Ex[Double], height: Ex[Double], */ elem: Ex[Seq[Elem]])
+case class Fill(color: Ex[Paint]) extends Presentation

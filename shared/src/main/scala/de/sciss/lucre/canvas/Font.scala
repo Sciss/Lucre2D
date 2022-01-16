@@ -1,5 +1,5 @@
 /*
- *  Paint.scala
+ *  Font.scala
  *  (Lucre2D)
  *
  *  Copyright (c) 2022 Hanns Holger Rutz. All rights reserved.
@@ -13,13 +13,6 @@
 
 package de.sciss.lucre.canvas
 
-import de.sciss.lucre.expr.graph.{Const, Ex}
-
-object Color {
-  def red   : Ex[Color] = Const(new Color {})
-  def green : Ex[Color] = Const(new Color {})
-  def blue  : Ex[Color] = Const(new Color {})
+final case class Font(family: String, sizePx: Int) {
+  def cssString: String = s"${sizePx}px $family"
 }
-trait Color extends Paint
-
-sealed trait Paint

@@ -1,5 +1,5 @@
 /*
- *  Presentation.scala
+ *  Graphics2D.scala
  *  (Lucre2D)
  *
  *  Copyright (c) 2022 Hanns Holger Rutz. All rights reserved.
@@ -13,8 +13,19 @@
 
 package de.sciss.lucre.canvas
 
-import de.sciss.lucre.expr.graph.Ex
+trait Graphics2D {
+//  var composite: Composite
 
-sealed trait Presentation
+  var font: Font
 
-case class Fill(color: Ex[Paint]) extends Presentation
+  var fillStyle: Color
+
+  def width : Double
+  def height: Double
+
+  def fillText(s: String, x: Double, y: Double): Unit
+
+  def fillShape(s: Shape): Unit
+
+  def translate(tx: Double, ty: Double): Unit
+}
