@@ -23,10 +23,22 @@ object Color {
       s"#${h.substring(1)}"
     }
 
+    override def argb32: Int = {
+      val r4 = (value >> 8) & 0xF
+      val g4 = (value >> 4) & 0xF
+      val b4 = value & 0xF
+      val r8 = (r4 << 20) | (r4 << 16)
+      val g8 = (g4 << 12) | (g4 <<  8)
+      val b8 = (b4 <<  4) |  b4
+      0xFF000000 | r8 | g8 | b8
+    }
+
     override def cssString: String = _cssString
   }
 
   final case class ARGB8(value: Int) extends Color {
+    override def argb32: Int = value
+
     private lazy val _cssString = {
       val rgba = (value << 8) | (value >>> 24)
       val h = (rgba & 0xFFFFFFFFL | 0x100000000L).toHexString
@@ -38,6 +50,10 @@ object Color {
     override def cssString: String = _cssString
   }
 }
-sealed trait Color {
+sealed trait Color extends Paint {
   def cssString: String
+
+  def argb32: Int
 }
+
+sealed trait Paint

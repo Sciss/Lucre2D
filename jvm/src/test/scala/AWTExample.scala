@@ -1,5 +1,3 @@
-
-
 import de.sciss.lucre.canvas.AWTGraphics2D
 import de.sciss.lucre.canvas.Import._
 import de.sciss.lucre.edit.UndoManager
@@ -30,7 +28,7 @@ object AWTExample {
     import de.sciss.lucre.canvas.graph._
 
     val g = Graphics(
-//      Rect(width = %(100), height = %(100)).fill(Color.red),
+      Rect(width = %(100), height = %(100)).fill(Color.red),
       Circle(cx = 150, cy = 100, r = 80).fill(Color.green),
     )
 
@@ -73,7 +71,6 @@ object AWTExample {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
         setVisible(true)
       }
-
     }
   }
 }

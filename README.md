@@ -22,6 +22,14 @@ To use the library in your project:
 
 The current version `v` is `"0.1.0"`.
 
+## running example
+
+On the Desktop:
+
+    sbt rootJVM/Test/run
+
+In the browser: to-do!
+
 ## contributing
 
 Please see the file [CONTRIBUTING.md](CONTRIBUTING.md)

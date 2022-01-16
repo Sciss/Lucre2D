@@ -18,7 +18,7 @@ trait Graphics2D {
 
   var font: Font
 
-  var fillStyle: Color
+  var fillStyle: Paint // Color
 
   def width : Double
   def height: Double

@@ -23,7 +23,7 @@ class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: D
 
 //  private var _composite: Composite = Composite.SourceOver
   private var _font: Font = Font("SansSerif", 12)
-  private var _fillStyle: Color = Color.RGB4(0)
+  private var _fillStyle: Paint = Color.RGB4(0)
 
 //  def newPeer(peer: java.awt.Graphics2D): AWTGraphics2D = {
 //    val res = new AWTGraphics2D(peer)
@@ -53,24 +53,17 @@ class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: D
     _peer.setFont(f)
   }
 
-  override def fillStyle: Color = _fillStyle
-  override def fillStyle_=(value: Color): Unit = {
+  override def fillStyle: Paint = _fillStyle
+  override def fillStyle_=(value: Paint): Unit = {
     _fillStyle = value
     value match {
-      case Color.RGB4(rgb4) =>
-        val r4    = (rgb4 & 0xF00) >> 8
-        val g4    = (rgb4 & 0x0F0) >> 4
-        val b4    =  rgb4 & 0x00F
-        val r8    = (r4 << 4) | r4
-        val g8    = (g4 << 4) | g4
-        val b8    = (b4 << 4) | b4
-        val rgb8  = (r8 << 16) | (g8 << 8) | b8
-        val c = new java.awt.Color(rgb8)
-        peer.setColor(c)
-
-      case Color.ARGB8(argb8) =>
-        val c = new java.awt.Color(argb8, true)
-        peer.setColor(c)
+      case c: Color =>
+        val cAWT = new java.awt.Color(c.argb32, true)
+        peer.setColor(cAWT)
+//
+//      case Color.ARGB8(argb8) =>
+//        val c = new java.awt.Color(argb8, true)
+//        peer.setColor(c)
     }
   }
 
