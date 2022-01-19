@@ -777,6 +777,8 @@ object Path2D {
           case SEG_CLOSE =>
             closePath()
 
+          case other =>
+            throw new IllegalStateException(other.toString)
         }
         pi.next()
         _connect = false
@@ -1373,6 +1375,8 @@ object Path2D {
           case SEG_CLOSE =>
             closePath()
 
+          case other =>
+            throw new IllegalStateException(other.toString)
         }
         pi.next()
         _connect = false
@@ -1904,12 +1908,11 @@ abstract class Path2D private[lucre]() extends Shape with Cloneable {
     var index = numCoords
     if (numTypes < 1 || index < 1) return null
     if (pointTypes(numTypes - 1) == Path2D.SEG_CLOSE) {
-      // loop //todo: labels are not supported
       var i = numTypes - 2
       while (i > 0) {
         pointTypes(i) match {
           case Path2D.SEG_MOVETO =>
-            i = 1 // break loop // todo: label break is not supported
+            i = 1 // break loop
 
           case Path2D.SEG_LINETO =>
             index -= 2
@@ -1921,6 +1924,9 @@ abstract class Path2D private[lucre]() extends Shape with Cloneable {
             index -= 6
 
           case Path2D.SEG_CLOSE =>
+
+          case other =>
+            throw new IllegalStateException(other.toString)
         }
         i -= 1
       }

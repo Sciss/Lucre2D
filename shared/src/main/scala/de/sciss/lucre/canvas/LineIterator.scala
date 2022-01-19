@@ -1,11 +1,11 @@
 package de.sciss.lucre.canvas
 
-// This is an adapted Scala translation of the RoundRectIterator Java class of OpenJDK
+// This is an adapted Scala translation of the LineIterator Java class of OpenJDK
 // as released under GNU GPL 2 -- see original file header below.
 // So it can be used in Scala.js.
 
 /*
- * Copyright (c) 1997, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 1999, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,58 +29,19 @@ package de.sciss.lucre.canvas
  * questions.
  */
 
-import de.sciss.lucre.canvas.PathIterator._
+import de.sciss.lucre.canvas.PathIterator.{SEG_LINETO, SEG_MOVETO, WIND_NON_ZERO}
 
 import java.util._
 
 
 /**
- * A utility class to iterate over the path segments of an rounded rectangle
+ * A utility class to iterate over the path segments of a line segment
  * through the PathIterator interface.
  *
  * @author Jim Graham
  */
-object RoundRectIterator {
-  private val angle = Math.PI / 4.0
-  private val a     = 1.0 - Math.cos(angle)
-  private val b     = Math.tan(angle)
-  private val c     = Math.sqrt(1.0 + b * b) - 1 + a
-  private val cv    = 4.0 / 3.0 * a * b / c
-  private val acv   = (1.0 - cv) / 2.0
-  // For each array:
-  //     4 values for each point {v0, v1, v2, v3}:
-  //         point = (x + v0 * w + v1 * arcWidth,
-  //                  y + v2 * h + v3 * arcHeight);
-  private val ctrlPts = Array(
-    Array(0.0, 0.0, 0.0, 0.5),
-    Array(0.0, 0.0, 1.0, -0.5),
-    Array(0.0, 0.0, 1.0, -acv, 0.0, acv, 1.0, 0.0, 0.0, 0.5, 1.0, 0.0),
-    Array(1.0, -0.5, 1.0, 0.0),
-    Array(1.0, -acv, 1.0, 0.0, 1.0, 0.0, 1.0, -acv, 1.0, 0.0, 1.0, -0.5),
-    Array(1.0, 0.0, 0.0, 0.5),
-    Array(1.0, 0.0, 0.0, acv, 1.0, -acv, 0.0, 0.0, 1.0, -0.5, 0.0, 0.0),
-    Array(0.0, 0.5, 0.0, 0.0),
-    Array(0.0, acv, 0.0, 0.0, 0.0, 0.0, 0.0, acv, 0.0, 0.0, 0.0, 0.5),
-    Array()
-  )
-  private val types = Array(
-    SEG_MOVETO, SEG_LINETO, SEG_CUBICTO,
-    SEG_LINETO, SEG_CUBICTO, SEG_LINETO,
-    SEG_CUBICTO, SEG_LINETO, SEG_CUBICTO,
-    SEG_CLOSE
-  )
-}
-
-class RoundRectIterator private[canvas](val rr: RoundRectangle2D, var affine: AffineTransform) extends PathIterator {
-  private val x   = rr.getX
-  private val y   = rr.getY
-  private val w   = rr.getWidth
-  private val h   = rr.getHeight
-  private val aw  = Math.min(w, Math.abs(rr.getArcWidth))
-  private val ah  = Math.min(h, Math.abs(rr.getArcHeight))
-  private var index = if (aw < 0 || ah < 0) { // Don't draw anything...
-    RoundRectIterator.ctrlPts.length
-  } else 0
+class LineIterator private[canvas](var line: Line2D, var affine: AffineTransform) extends PathIterator {
+  private[canvas] var index = 0
 
   /**
    * Return the winding rule for determining the insideness of the
@@ -96,7 +57,7 @@ class RoundRectIterator private[canvas](val rr: RoundRectangle2D, var affine: Af
    *
    * @return true if there are more points to read
    */
-  override def isDone: Boolean = index >= RoundRectIterator.ctrlPts.length
+  override def isDone: Boolean = index > 1
 
   /**
    * Moves the iterator to the next segment of the path forwards
@@ -126,19 +87,20 @@ class RoundRectIterator private[canvas](val rr: RoundRectangle2D, var affine: Af
    * @see #SEG_CLOSE
    */
   override def currentSegment(coords: Array[Float]): Int = {
-    if (isDone) throw new NoSuchElementException("roundrect iterator out of bounds")
-    val ctl = RoundRectIterator.ctrlPts(index)
-    var nc = 0
-    var i = 0
-    while (i < ctl.length) {
-      coords(nc) = (x + ctl(i + 0) * w + ctl(i + 1) * aw).toFloat
-      nc += 1
-      coords(nc) = (y + ctl(i + 2) * h + ctl(i + 3) * ah).toFloat
-      nc += 1
-      i  += 4
+    if (isDone) throw new NoSuchElementException("line iterator out of bounds")
+    var tpe = 0
+    if (index == 0) {
+      coords(0) = line.getX1.toFloat
+      coords(1) = line.getY1.toFloat
+      tpe = SEG_MOVETO
     }
-    if (affine != null) affine.transform(coords, 0, coords, 0, nc / 2)
-    RoundRectIterator.types(index)
+    else {
+      coords(0) = line.getX2.toFloat
+      coords(1) = line.getY2.toFloat
+      tpe = SEG_LINETO
+    }
+    if (affine != null) affine.transform(coords, 0, coords, 0, 1)
+    tpe
   }
 
   /**
@@ -161,18 +123,19 @@ class RoundRectIterator private[canvas](val rr: RoundRectangle2D, var affine: Af
    * @see #SEG_CLOSE
    */
   override def currentSegment(coords: Array[Double]): Int = {
-    if (isDone) throw new NoSuchElementException("round-rect iterator out of bounds")
-    val ctl = RoundRectIterator.ctrlPts(index)
-    var nc = 0
-    var i = 0
-    while (i < ctl.length) {
-      coords(nc) = x + ctl(i + 0) * w + ctl(i + 1) * aw
-      nc += 1
-      coords(nc) = y + ctl(i + 2) * h + ctl(i + 3) * ah
-      nc += 1
-      i  += 4
+    if (isDone) throw new NoSuchElementException("line iterator out of bounds")
+    var tpe = 0
+    if (index == 0) {
+      coords(0) = line.getX1
+      coords(1) = line.getY1
+      tpe = SEG_MOVETO
     }
-    if (affine != null) affine.transform(coords, 0, coords, 0, nc / 2)
-    RoundRectIterator.types(index)
+    else {
+      coords(0) = line.getX2
+      coords(1) = line.getY2
+      tpe = SEG_LINETO
+    }
+    if (affine != null) affine.transform(coords, 0, coords, 0, 1)
+    tpe
   }
 }

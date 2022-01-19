@@ -58,10 +58,10 @@ object AWTExample {
       colorIdxEx  = colorIdx.expand[T]
       val sqEx = g.elem.expand[T]
       sqEx.changed.react { implicit tx => upd =>
-        EventQueue.invokeLater { () =>
+        tx.afterCommit(EventQueue.invokeLater { () =>
           sq = upd.now
           c.repaint()
-        }
+        })
       }
       sq = sqEx.value
     }
