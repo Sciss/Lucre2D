@@ -26,8 +26,10 @@ object Example {
     val height    = 200
 
     val g = Graphics(Seq(
-      Rect(width = width /*%(100)*/, height = height /*%(100)*/).fill(Color.red),
-      Circle(cx = 150, cy = 100, r = 80).fill(Color.green),
+      Fill(Color.red),
+      Rect(width = width /*%(100)*/, height = height /*%(100)*/),
+      Fill(Color.green),
+      Circle(cx = 150, cy = 100, r = 80),
     ))
 
     println(g)

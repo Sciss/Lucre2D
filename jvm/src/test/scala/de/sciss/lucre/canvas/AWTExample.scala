@@ -39,8 +39,10 @@ object AWTExample {
     val color     = (Seq(Color.green, Color.blue): Ex[Seq[Color]]).applyOption(colorIdx).getOrElse(Color.red)
 
     val g = Graphics(Seq(
-      Rect(width = width /*%(100)*/, height = height /*%(100)*/).fill(Color.red),
-      Circle(cx = 150, cy = 100, r = radius).fill(color),
+      Fill(Color.red),
+      Rect(width = width /*%(100)*/, height = height /*%(100)*/),
+      Fill(color),
+      Circle(cx = 150, cy = 100, r = radius),
     ))
 
     println(g)

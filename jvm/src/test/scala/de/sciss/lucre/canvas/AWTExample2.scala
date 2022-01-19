@@ -37,16 +37,21 @@ object AWTExample2 {
     import de.sciss.lucre.canvas.graph._
 
     val g = Graphics(Seq(
-      Rect(x = 10, y = 10, width = 30, height = 30).stroke(Color.black).noFill().strokeWidth(5),
-      Rect(x = 60, y = 10, rx = 10, ry = 10, width = 30, height = 30).stroke(Color.black).noFill().strokeWidth(5),
-      Circle(cx = 25, cy = 75, r = 20).stroke(Color.red).noFill().strokeWidth(5),
-      Ellipse(cx = 75, cy = 75, rx = 20, ry = 5).stroke(Color.red).noFill().strokeWidth(5),
-      Line(x1 = 10, x2 = 50, y1 = 110, y2 = 150).stroke(Color.orange).strokeWidth(5),
-      Polyline(Seq[Double](60, 110, 65, 120, 70, 115, 75, 130, 80, 125, 85, 140, 90, 135, 95, 150, 100, 145))
-        .stroke(Color.orange).noFill().strokeWidth(5),
-      Polygon(Seq[Double](50, 160, 55, 180, 70, 180, 60, 190, 65, 205, 50, 195, 35, 205, 40, 190, 30, 180, 45, 180))
-        .stroke(Color.green).noFill().strokeWidth(5),
-      SvgPath("M20,230 Q40,205 50,230 T90,230").noFill().stroke(Color.blue).strokeWidth(5),
+      Stroke(Color.black),
+      StrokeWidth(5),
+      Fill.None,
+      Rect(x = 10, y = 10, width = 30, height = 30),
+      Rect(x = 60, y = 10, rx = 10, ry = 10, width = 30, height = 30),
+      Stroke(Color.red),
+      Circle(cx = 25, cy = 75, r = 20),
+      Ellipse(cx = 75, cy = 75, rx = 20, ry = 5),
+      Stroke(Color.orange),
+      Line(x1 = 10, x2 = 50, y1 = 110, y2 = 150),
+      Polyline(Seq[Double](60, 110, 65, 120, 70, 115, 75, 130, 80, 125, 85, 140, 90, 135, 95, 150, 100, 145)),
+      Stroke(Color.green),
+      Polygon(Seq[Double](50, 160, 55, 180, 70, 180, 60, 190, 65, 205, 50, 195, 35, 205, 40, 190, 30, 180, 45, 180)),
+      Stroke(Color.blue),
+      SvgPath("M20,230 Q40,205 50,230 T90,230"),
     ))
 
     type S = InMemory
