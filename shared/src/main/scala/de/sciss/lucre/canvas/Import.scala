@@ -19,4 +19,6 @@ import scala.language.implicitConversions
 
 object Import {
   implicit def intIsDoubleEx(i: Int): Ex[Double] = Const(i.toDouble)
+
+  def any2stringadd(x: Any): Unit = ()
 }

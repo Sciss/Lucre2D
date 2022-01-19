@@ -53,6 +53,9 @@ class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: D
   override def rotate(a: Double, x: Double, y: Double): Unit =
     if (x == 0 && y == 0) _peer.rotate(a) else _peer.rotate(a, x, y)
 
+  override def scale(x: Double, y: Double): Unit =
+    _peer.scale(x, y)
+
   override def pushMatrix(): Unit =
     _matrixStack = _peer.getTransform :: _matrixStack
 

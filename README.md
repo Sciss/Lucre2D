@@ -12,6 +12,8 @@ It is (C)opyright 2022 by Hanns Holger Rutz. All rights reserved. The project is
 the [GNU Affero General Public License](https://codeberg.org/sciss/Lucre2D/raw/main/LICENSE) v3+ and comes 
 with absolutely no warranties. To contact the author, send an e-mail to `contact at sciss.de`.
 
+![screenshot of example selection](screenshot.png)
+
 ## requirements / building
 
 This project builds with sbt against Scala 2.12, 2.13, 3.x (JVM) and Scala 2.13 (JS).

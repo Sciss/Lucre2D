@@ -16,7 +16,7 @@ package de.sciss.lucre.canvas.graph
 import de.sciss.lucre.{IExpr, Txn}
 import de.sciss.lucre.canvas.{Color => _Color}
 import de.sciss.lucre.expr.Context
-import de.sciss.lucre.expr.graph.{Const, Ex, UnaryOp}
+import de.sciss.lucre.expr.graph.{Const, Ex, TernaryOp, UnaryOp}
 import de.sciss.numbers.Implicits.doubleNumberWrapper
 
 object Color {
@@ -59,6 +59,29 @@ object Color {
       val amtEx = amt.expand[T]
       import ctx.targets
       new UnaryOp.Expanded(Gray.Op(), amtEx, tx)
+    }
+  }
+
+  object RGB {
+    private case class Op() extends TernaryOp.Op[Double, Double, Double, _Color] {
+      override def apply(r: Double, g: Double, b: Double): _Color = {
+        val rI    = (r.clip(0.0, 1.0) * 255).toInt
+        val gI    = (g.clip(0.0, 1.0) * 255).toInt
+        val bI    = (b.clip(0.0, 1.0) * 255).toInt
+        val value = 0xFF000000 | (rI << 16) | (gI << 8) | bI
+        _Color.ARGB8(value)
+      }
+    }
+  }
+  case class RGB(r: Ex[Double], g: Ex[Double], b: Ex[Double]) extends Ex[_Color] {
+    type Repr[T <: Txn[T]] = IExpr[T, _Color]
+
+    override protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
+      val rEx = r.expand[T]
+      val gEx = g.expand[T]
+      val bEx = b.expand[T]
+      import ctx.targets
+      new TernaryOp.Expanded(RGB.Op(), rEx, gEx, bEx, tx)
     }
   }
 }
