@@ -13,17 +13,19 @@
 
 package de.sciss.lucre.canvas
 
-//import com.jhlabs.composite.ColorBurnComposite
-import de.sciss.lucre.canvas.{AffineTransform, Color, Font, Graphics2D, PathIterator, Shape}
-
-import java.awt.Rectangle
+import java.awt.{BasicStroke, Rectangle}
 
 class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: Double)
   extends Graphics2D {
 
 //  private var _composite: Composite = Composite.SourceOver
   private var _font: Font = Font("SansSerif", 12)
-  private var _fillStyle: Paint = Color.RGB4(0)
+  private var _fillPaint  : Paint   = Color.RGB4(0)
+  private var _strokePaint: Paint   = Paint.Transparent
+  private var _strokeWidth: Double  = 1.0
+  private var _paint: Paint = null
+  private var _paintSet: Boolean = false
+  private var _strokeWidthSet: Double = 1.0
 
 //  def newPeer(peer: java.awt.Graphics2D): AWTGraphics2D = {
 //    val res = new AWTGraphics2D(peer)
@@ -53,24 +55,68 @@ class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: D
     _peer.setFont(f)
   }
 
-  override def fillStyle: Paint = _fillStyle
-  override def fillStyle_=(value: Paint): Unit = {
-    _fillStyle = value
-    value match {
-      case c: Color =>
-        val cAWT = new java.awt.Color(c.argb32, true)
-        peer.setColor(cAWT)
-//
-//      case Color.ARGB8(argb8) =>
-//        val c = new java.awt.Color(argb8, true)
-//        peer.setColor(c)
+  override def fillPaint: Paint = _fillPaint
+  override def fillPaint_=(value: Paint): Unit = {
+    _fillPaint = value
+  }
+
+  override def strokePaint: Paint = _strokePaint
+  override def strokePaint_=(value: Paint): Unit = {
+    _strokePaint = value
+  }
+
+  override def strokeWidth: Double = _strokeWidth
+  override def strokeWidth_=(value: Double): Unit = {
+    _strokeWidth = value
+  }
+
+  private def setFill(): Boolean = {
+    if (_paint != _fillPaint) {
+      _paint = _fillPaint
+      _fillPaint match {
+        case c: Color =>
+          val cAWT = new java.awt.Color(c.argb32, true)
+          peer.setColor(cAWT)
+          _paintSet = true
+
+        case Paint.Transparent =>
+          _paintSet = false
+
+        //
+        //      case Color.ARGB8(argb8) =>
+        //        val c = new java.awt.Color(argb8, true)
+        //        peer.setColor(c)
+      }
+    }
+    _paintSet
+  }
+
+  private def setStroke(): Boolean = {
+    if (_paint != _strokePaint) {
+      _paint = _strokePaint
+      _strokePaint match {
+        case c: Color =>
+          val cAWT = new java.awt.Color(c.argb32, true)
+          peer.setColor(cAWT)
+          _paintSet = true
+
+        case Paint.Transparent =>
+          _paintSet = false
+      }
+    }
+    _paintSet && {
+      if (_strokeWidthSet != _strokeWidth) {
+        if (_strokeWidth > 0.0) peer.setStroke(new BasicStroke(_strokeWidth.toFloat))
+        _strokeWidthSet = _strokeWidth
+      }
+      _strokeWidthSet > 0.0
     }
   }
 
   def peer: java.awt.Graphics2D = _peer
 
   override def fillText(s: String, x: Double, y: Double): Unit =
-    _peer.drawString(s, x.toFloat, y.toFloat)
+    if (setFill()) _peer.drawString(s, x.toFloat, y.toFloat)
 
   private final class WrapPathIterator(peer: PathIterator) extends java.awt.geom.PathIterator {
     override def getWindingRule: Int = peer.getWindingRule
@@ -133,8 +179,18 @@ class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: D
     }
   }
 
-  override def fillShape(s: Shape): Unit = {
+  override def fillShape(s: Shape): Unit = if (setFill()) {
     WrapShape.current = s
     _peer.fill(WrapShape)
+  }
+
+  override def strokeShape(s: Shape): Unit = if (setStroke()) {
+    WrapShape.current = s
+    _peer.draw(WrapShape)
+  }
+
+  override def fillStroke(s: Shape): Unit = {
+    fillShape   (s)
+    strokeShape (s)
   }
 }

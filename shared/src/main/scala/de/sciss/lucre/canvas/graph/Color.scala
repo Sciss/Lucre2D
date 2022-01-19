@@ -20,6 +20,7 @@ object Color {
   def red   : Ex[_Color] = Const(_Color.RGB4(0xF00))
   def green : Ex[_Color] = Const(_Color.RGB4(0x0F0))
   def blue  : Ex[_Color] = Const(_Color.RGB4(0x00F))
+  def black : Ex[_Color] = Const(_Color.RGB4(0x000))
 }
 //trait Color extends Paint {
 //  def argb: Int

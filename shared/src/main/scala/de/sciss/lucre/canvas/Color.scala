@@ -56,4 +56,7 @@ sealed trait Color extends Paint {
   def argb32: Int
 }
 
+object Paint {
+  case object Transparent extends Paint
+}
 sealed trait Paint

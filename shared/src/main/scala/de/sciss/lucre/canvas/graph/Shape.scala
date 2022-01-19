@@ -12,5 +12,11 @@
  */
 
 package de.sciss.lucre.canvas.graph
+import de.sciss.lucre.canvas.Graphics2D
 
+object Shape {
+  object Empty extends Shape {
+    override def render(g: Graphics2D): Unit = ()
+  }
+}
 trait Shape extends Graphics.Elem

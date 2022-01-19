@@ -1,5 +1,5 @@
 /*
- *  Circle.scala
+ *  Ellipse.scala
  *  (Lucre2D)
  *
  *  Copyright (c) 2022 Hanns Holger Rutz. All rights reserved.
@@ -20,8 +20,9 @@ import de.sciss.lucre.expr.graph.Ex
 import de.sciss.lucre.impl.IChangeEventImpl
 import de.sciss.lucre.{IChangeEvent, IExpr, IPull, ITargets, Txn}
 
-object Circle {
-  private final class Expanded[T <: Txn[T]](cx: IExpr[T, Len], cy: IExpr[T, Len], r: IExpr[T, Length],
+object Ellipse {
+  private final class Expanded[T <: Txn[T]](cx: IExpr[T, Len], cy: IExpr[T, Len],
+                                            rx: IExpr[T, AutoLen], ry: IExpr[T, AutoLen],
                                             prSeq: Seq[IExpr[T, Presentation]])
                                            (implicit protected val targets: ITargets[T])
     extends IExpr[T, Shape] with IChangeEventImpl[T, Shape] {
@@ -29,7 +30,8 @@ object Circle {
     def init()(implicit tx: T): this.type = {
       cx.changed ---> this
       cy.changed ---> this
-      r .changed ---> this
+      rx.changed ---> this
+      ry.changed ---> this
       prSeq.foreach(_.changed ---> this)
       this
     }
@@ -37,60 +39,73 @@ object Circle {
     override private[lucre] def pullChange(pull: IPull[T])(implicit tx: T, phase: IPull.Phase): Shape = {
       val cxV     = pull.expr(cx)
       val cyV     = pull.expr(cy)
-      val rV      = pull.expr(r )
+      val rxV     = pull.expr(rx)
+      val ryV     = pull.expr(ry)
       val prSeqV  = prSeq.map(pull.expr)
-      val res     = value1(cxV, cyV, rV, prSeqV)
-      res
+      value1(cxV = cxV, cyV = cyV, rxV = rxV, ryV = ryV, prSeqV)
     }
 
     def value(implicit tx: T): Shape = {
       val cxV     = cx.value
       val cyV     = cy.value
-      val rV      = r .value
+      val rxV     = rx.value
+      val ryV     = ry.value
       val prSeqV  = prSeq.map(_.value)
-      value1(cxV, cyV, rV, prSeqV)
+      value1(cxV = cxV, cyV = cyV, rxV = rxV, ryV = ryV, prSeqV)
     }
 
-    private def value1(cxV: Len, cyV: Len, rV: Length, prSeqV: Seq[Presentation]): Shape = { (g: Graphics2D) =>
-      val rPx = rV match {
-        case Length.Px(n) => n
+    private def value1(cxV: Len, cyV: Len, rxV: AutoLen, ryV: AutoLen,
+                       prSeqV: Seq[Presentation]): Shape = { (g: Graphics2D) =>
+      val rxPx = rxV match {
+        case Length.Px(n)   => n
+        case Fraction(f)    => f * g.width
+        case AutoLen.Value  => 0.0  // XXX TODO what's this supposed to be?
       }
-      if (rPx > 0) {
-        val cxPx = cxV match {
-          case Length.Px(n) => n
-          case Fraction(f)  => f * g.width
-        }
-        val cyPx = cyV match {
-          case Length.Px(n) => n
-          case Fraction(f)  => f * g.height
-        }
+      // if (rxPx <= 0) return
 
-        val xPx = cxPx - rPx
-        val yPx = cyPx - rPx
-        val wPx = rPx * 2
-        val hPx = wPx
-        prSeqV.foreach { prV =>
-          prV.render(g)
-        }
-        val shp = new Ellipse2D.Double(x = xPx, y = yPx, w = wPx, h = hPx)
-        g.fillStroke(shp)
+      val ryPx = ryV match {
+        case Length.Px(n)   => n
+        case Fraction(f)    => f * g.height
+        case AutoLen.Value  => 0.0  // XXX TODO what's this supposed to be?
       }
+      // if (rxPx <= 0) return
+
+      val cxPx = cxV match {
+        case Length.Px(n) => n
+        case Fraction(f)  => f * g.width
+      }
+      val cyPx = cyV match {
+        case Length.Px(n) => n
+        case Fraction(f)  => f * g.height
+      }
+
+      val xPx = cxPx - rxPx
+      val yPx = cyPx - ryPx
+      val wPx = rxPx * 2
+      val hPx = ryPx * 2
+      prSeqV.foreach { prV =>
+        prV.render(g)
+      }
+      val shp = new Ellipse2D.Double(x = xPx, y = yPx, w = wPx, h = hPx)
+      g.fillStroke(shp)
     }
 
     override def dispose()(implicit tx: T): Unit = {
       cx.changed -/-> changed
       cy.changed -/-> changed
-      r .changed -/-> changed
+      rx.changed -/-> changed
+      ry.changed -/-> changed
       prSeq.foreach(_.changed -/-> this)
     }
 
     override def changed: IChangeEvent[T, Shape] = this
   }
 }
-case class Circle(cx: Ex[Len] = 0, cy: Ex[Len] = 0, r: Ex[Length] = 0, pr: Seq[Ex[Presentation]] = Nil)
+case class Ellipse(cx: Ex[Len] = 0, cy: Ex[Len] = 0, rx: Ex[AutoLen] = AutoLen(), ry: Ex[AutoLen] = AutoLen(),
+                   pr: Seq[Ex[Presentation]] = Nil)
   extends Ex[Shape] {
 
-  type Self = Circle
+  type Self = Ellipse
 
   type Repr[T <: Txn[T]] = IExpr[T, Shape]
 
@@ -108,9 +123,10 @@ case class Circle(cx: Ex[Len] = 0, cy: Ex[Len] = 0, r: Ex[Length] = 0, pr: Seq[E
   override protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
     val cxEx  = cx.expand[T]
     val cyEx  = cy.expand[T]
-    val rEx   = r .expand[T]
+    val rxEx  = rx.expand[T]
+    val ryEx  = ry.expand[T]
     val prEx = pr.map(_.expand[T]: IExpr[T, Presentation])
     import ctx.targets
-    new Circle.Expanded[T](cxEx, cyEx, rEx, prEx).init()
+    new Ellipse.Expanded[T](cxEx, cyEx, rxEx, ryEx, prEx).init()
   }
 }

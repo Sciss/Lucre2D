@@ -13,7 +13,6 @@
 
 package de.sciss.lucre.canvas.graph
 
-import de.sciss.lucre.canvas.graph.Fill.Op
 import de.sciss.lucre.canvas.{Graphics2D, Paint}
 import de.sciss.lucre.{IExpr, Txn}
 import de.sciss.lucre.expr.Context
@@ -27,7 +26,7 @@ object Fill {
   private final case class Op() extends UnaryOp.Op[Paint, Presentation] {
     override def apply(p: Paint): Presentation =
       new Presentation {
-        override def render(g: Graphics2D): Unit = g.fillStyle = p
+        override def render(g: Graphics2D): Unit = g.fillPaint = p
       }
   }
 }
@@ -37,6 +36,42 @@ case class Fill(color: Ex[Paint]) extends Ex[Presentation] {
   override protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
     val colorEx = color.expand[T]
     import ctx.targets
-    new UnaryOp.Expanded(Op(), colorEx, tx)
+    new UnaryOp.Expanded(Fill.Op(), colorEx, tx)
+  }
+}
+
+object Stroke {
+  private final case class Op() extends UnaryOp.Op[Paint, Presentation] {
+    override def apply(p: Paint): Presentation =
+      new Presentation {
+        override def render(g: Graphics2D): Unit = g.strokePaint = p
+      }
+  }
+}
+case class Stroke(color: Ex[Paint]) extends Ex[Presentation] {
+  type Repr[T <: Txn[T]] = IExpr[T, Presentation]
+
+  override protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
+    val colorEx = color.expand[T]
+    import ctx.targets
+    new UnaryOp.Expanded(Stroke.Op(), colorEx, tx)
+  }
+}
+
+object StrokeWidth {
+  private final case class Op() extends UnaryOp.Op[Double, Presentation] {
+    override def apply(w: Double): Presentation =
+      new Presentation {
+        override def render(g: Graphics2D): Unit = g.strokeWidth = w
+      }
+  }
+}
+case class StrokeWidth(w: Ex[Double]) extends Ex[Presentation] {
+  type Repr[T <: Txn[T]] = IExpr[T, Presentation]
+
+  override protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
+    val wEx = w.expand[T]
+    import ctx.targets
+    new UnaryOp.Expanded(StrokeWidth.Op(), wEx, tx)
   }
 }

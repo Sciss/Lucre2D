@@ -18,14 +18,18 @@ trait Graphics2D {
 
   var font: Font
 
-  var fillStyle: Paint // Color
+  var fillPaint   : Paint
+  var strokePaint : Paint
+  var strokeWidth : Double
 
   def width : Double
   def height: Double
 
   def fillText(s: String, x: Double, y: Double): Unit
 
-  def fillShape(s: Shape): Unit
+  def fillShape   (s: Shape): Unit
+  def strokeShape (s: Shape): Unit
+  def fillStroke  (s: Shape): Unit
 
   def translate(tx: Double, ty: Double): Unit
 }
