@@ -14,6 +14,7 @@
 package de.sciss.lucre.canvas
 
 import java.awt.{BasicStroke, Rectangle}
+import java.awt.geom.{AffineTransform => JAffineTransform}
 
 class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: Double)
   extends Graphics2D {
@@ -26,6 +27,7 @@ class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: D
   private var _paint: Paint = null
   private var _paintSet: Boolean = false
   private var _strokeWidthSet: Double = 1.0
+  private var _matrixStack = List.empty[JAffineTransform]
 
 //  def newPeer(peer: java.awt.Graphics2D): AWTGraphics2D = {
 //    val res = new AWTGraphics2D(peer)
@@ -47,6 +49,20 @@ class AWTGraphics2D(_peer: java.awt.Graphics2D, val width: Double, val height: D
 
   override def translate(tx: Double, ty: Double): Unit =
     _peer.translate(tx, ty)
+
+  override def rotate(a: Double, x: Double, y: Double): Unit =
+    if (x == 0 && y == 0) _peer.rotate(a) else _peer.rotate(a, x, y)
+
+  override def pushMatrix(): Unit =
+    _matrixStack = _peer.getTransform :: _matrixStack
+
+  override def popMatrix(): Unit =
+    _matrixStack match {
+      case head :: tail =>
+        _peer.setTransform(head)
+        _matrixStack = tail
+      case _ => () // ignore errors?
+    }
 
   override def font: Font = _font
   override def font_=(value: Font): Unit = {

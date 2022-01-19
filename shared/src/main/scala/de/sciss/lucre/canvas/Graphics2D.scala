@@ -32,4 +32,8 @@ trait Graphics2D {
   def fillStroke  (s: Shape): Unit
 
   def translate(tx: Double, ty: Double): Unit
+  def rotate   (a: Double, x: Double, y: Double): Unit
+
+  def pushMatrix(): Unit
+  def popMatrix(): Unit
 }
