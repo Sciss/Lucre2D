@@ -21,8 +21,8 @@ import de.sciss.lucre.impl.IChangeEventImpl
 import de.sciss.lucre.{IChangeEvent, IExpr, IPull, ITargets, Txn}
 
 object Line {
-  private final class Expanded[T <: Txn[T]](x1: IExpr[T, Len], y1: IExpr[T, Len],
-                                            x2: IExpr[T, Len], y2: IExpr[T, Len],
+  private final class Expanded[T <: Txn[T]](x1: IExpr[T, Double], y1: IExpr[T, Double],
+                                            x2: IExpr[T, Double], y2: IExpr[T, Double],
                                             prSeq: Seq[IExpr[T, Presentation]])
                                            (implicit protected val targets: ITargets[T])
     extends IExpr[T, Shape] with IChangeEventImpl[T, Shape] {
@@ -54,30 +54,14 @@ object Line {
       value1(x1V = cxV, y1V = cyV, x2V = rxV, y2V = ryV, prSeqV)
     }
 
-    private def value1(x1V: Len, y1V: Len, x2V: Len, y2V: Len,
+    private def value1(x1V: Double, y1V: Double, x2V: Double, y2V: Double,
                        prSeqV: Seq[Presentation]): Shape = { (g: Graphics2D) =>
-      val x1Px = x1V match {
-        case Length.Px(n)   => n
-        case Fraction(f)    => f * g.width
-      }
-      val y1Px = y1V match {
-        case Length.Px(n)   => n
-        case Fraction(f)    => f * g.height
-      }
-      val x2Px = x2V match {
-        case Length.Px(n)   => n
-        case Fraction(f)    => f * g.width
-      }
-
-      val y2Px = y2V match {
-        case Length.Px(n)   => n
-        case Fraction(f)    => f * g.height
-      }
       prSeqV.foreach { prV =>
         prV.render(g)
       }
-      val shp = new Line2D.Double(x1 = x1Px, y1 = y1Px, x2 = x2Px, y2 = y2Px)
-      g.fillStroke(shp)
+      val shp = new Line2D.Double(x1 = x1V, y1 = y1V, x2 = x2V, y2 = y2V)
+      // g.fillStroke(shp)
+      g.strokeShape(shp)
     }
 
     override def dispose()(implicit tx: T): Unit = {
@@ -91,7 +75,7 @@ object Line {
     override def changed: IChangeEvent[T, Shape] = this
   }
 }
-case class Line(x1: Ex[Len] = 0, y1: Ex[Len] = 0, x2: Ex[Len] = 0, y2: Ex[Len] = 0,
+case class Line(x1: Ex[Double] = 0, y1: Ex[Double] = 0, x2: Ex[Double] = 0, y2: Ex[Double] = 0,
                 pr: Seq[Ex[Presentation]] = Nil)
   extends Ex[Shape] {
 

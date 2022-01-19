@@ -22,10 +22,13 @@ object Example {
   def run(): Unit = {
     import de.sciss.lucre.canvas.graph._
 
-    val g = Graphics(
-      Rect(width = %(100), height = %(100)).fill(Color.red),
+    val width     = 300
+    val height    = 200
+
+    val g = Graphics(Seq(
+      Rect(width = width /*%(100)*/, height = height /*%(100)*/).fill(Color.red),
       Circle(cx = 150, cy = 100, r = 80).fill(Color.green),
-    )
+    ))
 
     println(g)
 

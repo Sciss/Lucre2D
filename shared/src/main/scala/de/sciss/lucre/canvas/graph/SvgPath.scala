@@ -21,7 +21,7 @@ import de.sciss.lucre.expr.graph.Ex
 import de.sciss.lucre.impl.IChangeEventImpl
 import de.sciss.lucre.{IChangeEvent, IExpr, IPull, ITargets, Txn}
 
-object Path {
+object SvgPath {
   private final class Expanded[T <: Txn[T]](d: IExpr[T, String],
                                             prSeq: Seq[IExpr[T, Presentation]])
                                            (implicit protected val targets: ITargets[T])
@@ -65,10 +65,10 @@ object Path {
     override def changed: IChangeEvent[T, Shape] = this
   }
 }
-case class Path(d: Ex[String] = "", pr: Seq[Ex[Presentation]] = Nil)
+case class SvgPath(d: Ex[String] = "", pr: Seq[Ex[Presentation]] = Nil)
   extends Ex[Shape] {
 
-  type Self = Path
+  type Self = SvgPath
 
   type Repr[T <: Txn[T]] = IExpr[T, Shape]
 
@@ -87,6 +87,6 @@ case class Path(d: Ex[String] = "", pr: Seq[Ex[Presentation]] = Nil)
     val dEx = d.expand[T]
     val prSeqEx = pr.map(_.expand[T]: IExpr[T, Presentation])
     import ctx.targets
-    new Path.Expanded[T](d = dEx, prSeq = prSeqEx).init()
+    new SvgPath.Expanded[T](d = dEx, prSeq = prSeqEx).init()
   }
 }

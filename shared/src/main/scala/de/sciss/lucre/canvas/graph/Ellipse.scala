@@ -21,8 +21,8 @@ import de.sciss.lucre.impl.IChangeEventImpl
 import de.sciss.lucre.{IChangeEvent, IExpr, IPull, ITargets, Txn}
 
 object Ellipse {
-  private final class Expanded[T <: Txn[T]](cx: IExpr[T, Len], cy: IExpr[T, Len],
-                                            rx: IExpr[T, AutoLen], ry: IExpr[T, AutoLen],
+  private final class Expanded[T <: Txn[T]](cx: IExpr[T, Double], cy: IExpr[T, Double],
+                                            rx: IExpr[T, Double], ry: IExpr[T, Double],
                                             prSeq: Seq[IExpr[T, Presentation]])
                                            (implicit protected val targets: ITargets[T])
     extends IExpr[T, Shape] with IChangeEventImpl[T, Shape] {
@@ -54,39 +54,19 @@ object Ellipse {
       value1(cxV = cxV, cyV = cyV, rxV = rxV, ryV = ryV, prSeqV)
     }
 
-    private def value1(cxV: Len, cyV: Len, rxV: AutoLen, ryV: AutoLen,
+    private def value1(cxV: Double, cyV: Double, rxV: Double, ryV: Double,
                        prSeqV: Seq[Presentation]): Shape = { (g: Graphics2D) =>
-      val rxPx = rxV match {
-        case Length.Px(n)   => n
-        case Fraction(f)    => f * g.width
-        case AutoLen.Value  => 0.0  // XXX TODO what's this supposed to be?
-      }
-      // if (rxPx <= 0) return
+      // if (rxV <= 0) return
+      // if (ryV <= 0) return
 
-      val ryPx = ryV match {
-        case Length.Px(n)   => n
-        case Fraction(f)    => f * g.height
-        case AutoLen.Value  => 0.0  // XXX TODO what's this supposed to be?
-      }
-      // if (rxPx <= 0) return
-
-      val cxPx = cxV match {
-        case Length.Px(n) => n
-        case Fraction(f)  => f * g.width
-      }
-      val cyPx = cyV match {
-        case Length.Px(n) => n
-        case Fraction(f)  => f * g.height
-      }
-
-      val xPx = cxPx - rxPx
-      val yPx = cyPx - ryPx
-      val wPx = rxPx * 2
-      val hPx = ryPx * 2
+      val xV = cxV - rxV
+      val yV = cyV - ryV
+      val wV = rxV * 2
+      val hV = ryV * 2
       prSeqV.foreach { prV =>
         prV.render(g)
       }
-      val shp = new Ellipse2D.Double(x = xPx, y = yPx, w = wPx, h = hPx)
+      val shp = new Ellipse2D.Double(x = xV, y = yV, w = wV, h = hV)
       g.fillStroke(shp)
     }
 
@@ -101,7 +81,7 @@ object Ellipse {
     override def changed: IChangeEvent[T, Shape] = this
   }
 }
-case class Ellipse(cx: Ex[Len] = 0, cy: Ex[Len] = 0, rx: Ex[AutoLen] = AutoLen(), ry: Ex[AutoLen] = AutoLen(),
+case class Ellipse(cx: Ex[Double] = 0, cy: Ex[Double] = 0, rx: Ex[Double], ry: Ex[Double],
                    pr: Seq[Ex[Presentation]] = Nil)
   extends Ex[Shape] {
 

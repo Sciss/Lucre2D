@@ -1,10 +1,10 @@
 package de.sciss.lucre.canvas
 
 import de.sciss.lucre.canvas.Import._
-import de.sciss.lucre.canvas.graph.Graphics.Elem
 import de.sciss.lucre.edit.UndoManager
 import de.sciss.lucre.expr.Context
 import de.sciss.lucre.{InMemory, Workspace}
+import de.sciss.lucre.canvas.{Color => _Color}
 
 import java.awt
 import java.awt.{BorderLayout, EventQueue}
@@ -17,54 +17,66 @@ object AWTExample3 {
 
    */
 
-  def main(args: Array[String]): Unit = run()
+  def main(args: Array[String]): Unit = {
+    val widthI  = args.indexOf("--width"  ) + 1
+    val heightI = args.indexOf("--height" ) + 1
+    val width   = if (widthI  == 0) 640 else args(widthI  ).toInt
+    val height  = if (heightI == 0) 360 else args(heightI ).toInt
+    run(width, height)
+  }
 
-  def run(): Unit = {
+  def run(width: Int, height: Int = 360): Unit = {
     import de.sciss.lucre.canvas.graph._
     import de.sciss.lucre.expr.graph._
 
     val angle = Var(45.0)
 
-    val width   = 640
-    val height  = 360
-
-    val g: Graphics = {
+    /**
+     * Recursive Tree
+     * by Daniel Shiffman.
+     *
+     * Renders a simple tree-like structure via recursion.
+     * The branching angle is calculated as a function of
+     * the horizontal mouse location. Move the mouse left
+     * and right to change the angle.
+     */
+    val g = Graphics.use { b =>
+      import b._
+      background(0.0)
       val theta = angle * math.Pi / 180
 
-      def branch(h0: Double): Seq[Ex[Elem]] = {
+      def branch(h0: Double): Unit = {
         // Each branch will be 2/3rds the size of the previous one
         val h = h0 * 0.66
 
         // All recursive functions must have an exit condition!!!!
         // Here, ours is when the length of the branch is 2 pixels or less
-        if (h <= 2) Nil else {
-          Seq(
-            PushMatrix(),       // Save the current state of transformation (i.e. where are we now)
-            Rotate(theta),      // Rotate by theta
-            Line(0, 0, 0, -h).stroke(Color.black),  // Draw the branch
-            Translate(0, -h),   // Move to the end of the branch
-          ) ++ branch(h) ++ Seq(  // Ok, now call myself to draw two new branches!!
-            PopMatrix(),        // Whenever we get back here, we "pop" in order to restore the previous matrix state
-            // Repeat the same thing, only branch off to the "left" this time!
-            PushMatrix(),
-            Rotate(-theta),
-            Line(0, 0, 0, -h).stroke(Color.black),
-            Translate(0, -h)
-          ) ++ branch(h) :+ PopMatrix()
+        if (h > 2) {
+          pushMatrix()        // Save the current state of transformation (i.e. where are we now)
+          rotate(theta)       // Rotate by theta
+          line(0, 0, 0, -h)   // Draw the branch
+          translate(0, -h)    // Move to the end of the branch
+          branch(h)           // Ok, now call myself to draw two new branches!!
+          popMatrix()         // Whenever we get back here, we "pop" in order to restore the previous matrix state
+          // Repeat the same thing, only branch off to the "left" this time!
+          pushMatrix()
+          rotate(-theta)
+          line(0, 0, 0, -h)
+          translate(0, -h)
+          branch(h)
+          popMatrix()
         }
       }
 
       // Start the tree from the bottom of the screen
-      Graphics(
-        Seq(
-          Translate(width/2, height),
-          // Draw a line 120 pixels
-          Line(0, 0, 0, -120).stroke(Color.black),
-          // Move to the end of that line
-          Translate(0, -120),
-          // Start the recursive branching!
-        ) ++ branch(120)
-      )
+      translate(width/2, height)
+      val len = math.min(width/4, height/3)
+      // Draw a line 120 pixels
+      line(0, 0, 0, -len)
+      // Move to the end of that line
+      translate(0, -len)
+      // Start the recursive branching!
+      branch(len)
     }
 
     println(g)
@@ -102,11 +114,14 @@ object AWTExample3 {
           val g2 = g.asInstanceOf[awt.Graphics2D]
           val w = getWidth
           val h = getHeight
-          // g2.setColor(awt.Color.white)
-          // g2.fillRect(0, 0, w, h)
+          g2.setColor(new java.awt.Color(0xffCCCCCC))
+          g2.fillRect(0, 0, w, h)
           // g2.setColor(awt.Color.black)
           g2.setRenderingHint(awt.RenderingHints.KEY_ANTIALIASING, awt.RenderingHints.VALUE_ANTIALIAS_ON)
           val gl = new AWTGraphics2D(g2, w, h)
+          // Processing defaults:
+          gl.fillPaint    = _Color.RGB4(0x000)
+          gl.strokePaint  = _Color.RGB4(0xFFF)
           sq.foreach { elem =>
             elem.render(gl)
           }

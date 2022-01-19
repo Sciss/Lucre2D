@@ -18,7 +18,7 @@ import de.sciss.lucre.{IExpr, Txn}
 import de.sciss.lucre.expr.Context
 import de.sciss.lucre.expr.graph.{Ex, UnaryOp}
 
-sealed trait Presentation {
+sealed trait Presentation extends Graphics.Elem {
   def render(g: Graphics2D): Unit
 }
 

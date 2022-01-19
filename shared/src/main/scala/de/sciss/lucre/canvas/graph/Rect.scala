@@ -13,7 +13,6 @@
 
 package de.sciss.lucre.canvas.graph
 
-import de.sciss.lucre.canvas.Import._
 import de.sciss.lucre.canvas.{Graphics2D, Rectangle2D, RoundRectangle2D, Paint => _Paint}
 import de.sciss.lucre.expr.Context
 import de.sciss.lucre.expr.graph.Ex
@@ -21,9 +20,9 @@ import de.sciss.lucre.impl.IChangeEventImpl
 import de.sciss.lucre.{IChangeEvent, IExpr, IPull, ITargets, Txn}
 
 object Rect {
-  private final class Expanded[T <: Txn[T]](x: IExpr[T, Len], y: IExpr[T, Len],
-                                            width: IExpr[T, AutoLen], height: IExpr[T, AutoLen],
-                                            rx: IExpr[T, AutoLen], ry: IExpr[T, AutoLen],
+  private final class Expanded[T <: Txn[T]](x: IExpr[T, Double], y: IExpr[T, Double],
+                                            width: IExpr[T, Double], height: IExpr[T, Double],
+                                            rx: IExpr[T, Double], ry: IExpr[T, Double],
                                             prSeq: Seq[IExpr[T, Presentation]])
                                            (implicit protected val targets: ITargets[T])
     extends IExpr[T, Shape] with IChangeEventImpl[T, Shape] {
@@ -63,52 +62,19 @@ object Rect {
           rxV = rxV, ryV = ryV, prSeqV = prSeqV)
     }
 
-    private def value1(xV: Len, yV: Len, widthV: AutoLen, heightV: AutoLen, rxV: AutoLen, ryV: AutoLen,
+    private def value1(xV: Double, yV: Double, widthV: Double, heightV: Double, rxV: Double, ryV: Double,
                        prSeqV: Seq[Presentation]): Shape = new Shape {
       override def render(g: Graphics2D): Unit = {
-        val wPx = widthV match {
-          case Length.Px(n)   => n
-          case Fraction(f)    => f * g.width
-          case AutoLen.Value  => 0.0  // XXX TODO what's this supposed to be?
-        }
-        // if (wPx <= 0) return
-
-        val hPx = heightV match {
-          case Length.Px(n)   => n
-          case Fraction(f)    => f * g.height
-          case AutoLen.Value  => 0.0  // XXX TODO what's this supposed to be?
-        }
-        // if (hPx <= 0) return
-
-        val xPx = xV match {
-          case Length.Px(n) => n
-          case Fraction(f)  => f * g.width
-        }
-        val yPx = yV match {
-          case Length.Px(n) => n
-          case Fraction(f)  => f * g.height
-        }
-
-        val rxPx = rxV match {
-          case Length.Px(n)   => n
-          case Fraction(f)    => f * g.width
-          case AutoLen.Value  => 0.0  // XXX TODO what's this supposed to be?
-        }
-
-        val ryPx = ryV match {
-          case Length.Px(n)   => n
-          case Fraction(f)    => f * g.height
-          case AutoLen.Value  => 0.0  // XXX TODO what's this supposed to be?
-        }
-
+        // if (widthV <= 0) return
+        // if (heightV <= 0) return
         prSeqV.foreach { prV =>
           prV.render(g)
         }
 
-        val shp = if (rxPx <= 0 && ryPx <= 0)
-          new Rectangle2D.Double(x = xPx, y = yPx, w = wPx, h = hPx)
+        val shp = if (rxV <= 0 && ryV <= 0)
+          new Rectangle2D.Double(x = xV, y = yV, w = widthV, h = heightV)
         else
-          new RoundRectangle2D.Double(x = xPx, y = yPx, w = wPx, h = hPx, arcW = rxPx, arcH = ryPx)
+          new RoundRectangle2D.Double(x = xV, y = yV, w = widthV, h = heightV, arcW = rxV, arcH = ryV)
         g.fillStroke(shp)
       }
     }
@@ -126,12 +92,12 @@ object Rect {
     override def changed: IChangeEvent[T, Shape] = this
   }
 }
-case class Rect(x     : Ex[Len]     = 0,
-                y     : Ex[Len]     = 0,
-                width : Ex[AutoLen] = AutoLen(),
-                height: Ex[AutoLen] = AutoLen(),
-                rx    : Ex[AutoLen] = AutoLen(),
-                ry    : Ex[AutoLen] = AutoLen(),
+case class Rect(x     : Ex[Double]  = 0.0,
+                y     : Ex[Double]  = 0.0,
+                width : Ex[Double]  = 0.0,
+                height: Ex[Double]  = 0.0,
+                rx    : Ex[Double]  = 0.0,
+                ry    : Ex[Double]  = 0.0,
                 pr    : Seq[Ex[Presentation]] = Nil,
                )
   extends Ex[Shape] {

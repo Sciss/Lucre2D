@@ -31,14 +31,17 @@ object AWTExample {
     import de.sciss.lucre.canvas.graph._
     import de.sciss.lucre.expr.graph._
 
+    val width     = 300
+    val height    = 200
+
     val radius    = Var(80.0)
     val colorIdx  = Var[Int](0)
     val color     = (Seq(Color.green, Color.blue): Ex[Seq[Color]]).applyOption(colorIdx).getOrElse(Color.red)
 
-    val g = Graphics(
-      Rect(width = %(100), height = %(100)).fill(Color.red),
+    val g = Graphics(Seq(
+      Rect(width = width /*%(100)*/, height = height /*%(100)*/).fill(Color.red),
       Circle(cx = 150, cy = 100, r = radius).fill(color),
-    )
+    ))
 
     println(g)
 
@@ -70,7 +73,7 @@ object AWTExample {
 
     EventQueue.invokeLater { () =>
       c = new JComponent {
-        setPreferredSize(new awt.Dimension(300, 200))
+        setPreferredSize(new awt.Dimension(width, height))
         // setOpaque(true)
 
         override def paintComponent(g: awt.Graphics): Unit = {
