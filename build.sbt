@@ -15,6 +15,7 @@ lazy val deps = new {
   }
   val test = new {
     val scalaTest = "3.2.10"
+    val scallop   = "4.0.2"
   }
 }
 
@@ -48,6 +49,7 @@ lazy val root = crossProject(JVMPlatform, JSPlatform).in(file("."))
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
+      "org.rogach" %% "scallop" % deps.test.scallop % Test,    // command line option parsing
     ),
   )
   .jsSettings(

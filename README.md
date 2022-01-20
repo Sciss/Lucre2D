@@ -30,6 +30,10 @@ On the Desktop:
 
     sbt rootJVM/Test/run
 
+Or to configure the Processing-inspired examples:
+
+    sbt 'rootJVM/Test/runMain de.sciss.lucre.canvas.P5Examples --help'
+
 In the browser: to-do!
 
 ## contributing

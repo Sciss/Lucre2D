@@ -9,6 +9,8 @@ object P5Example {
   trait Category  extends Product { def members : Seq[Member    ] }
   trait Member    extends Product { def examples: Seq[P5Example ] }
 
+  lazy val examples: Seq[P5Example] = categories.flatMap(_.members.flatMap(_.examples))
+
   val categories: Seq[Category] = Seq(
     Basics, Topics
   )

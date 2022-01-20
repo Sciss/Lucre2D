@@ -4,28 +4,87 @@ import de.sciss.lucre.canvas.{Color => _Color}
 import de.sciss.lucre.edit.UndoManager
 import de.sciss.lucre.expr.Context
 import de.sciss.lucre.{InMemory, Workspace}
+import de.sciss.numbers.Implicits.doubleNumberWrapper
+import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 
 import java.awt
-import java.awt.event.{MouseAdapter, MouseEvent}
+import java.awt.event.{KeyAdapter, KeyEvent, MouseAdapter, MouseEvent}
 import java.awt.{BorderLayout, EventQueue}
+import java.util.TimerTask
 import javax.swing.event.ChangeEvent
 import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.{JComponent, JFrame, JScrollPane, JSlider, JTree, WindowConstants}
+import javax.swing.{JComponent, JFrame, JScrollPane, JSlider, JTree, SwingUtilities, WindowConstants}
 
 object P5Examples {
+  case class Config(widthOpt: Option[Int] = None, heightOpt: Option[Int] = None,
+                    example: Option[P5Example] = None, fullScreen: Boolean = false,
+                    animate: Boolean = false, animatePeriod: Double = 2.0,
+                    animateFPS: Double = 30.0, animateTri: Boolean = false,
+                   )
+
   def main(args: Array[String]): Unit = {
-    val widthI  = args.indexOf("--width"  ) + 1
-    val heightI = args.indexOf("--height" ) + 1
-    val width   = if (widthI  == 0) None else Some(args(widthI  ).toInt)
-    val height  = if (heightI == 0) None else Some(args(heightI ).toInt)
-//    run(width, height)
+    def findExample(name: String): Option[P5Example] = {
+      val nameL = name.toLowerCase
+      P5Example.examples.find(_.productPrefix.toLowerCase == nameL)
+    }
+
+    object p extends ScallopConf(args) {
+      printedName = "P5Examples"
+      private val default = Config()
+
+      val width: Opt[Int] = opt(
+        descr = "Window width in pixels.",
+        validate = x => x >= 0
+      )
+      val height: Opt[Int] = opt(
+        descr = "Window height in pixels.",
+        validate = x => x >= 0
+      )
+      val example: Opt[String] = opt(
+        descr = "Name of example to launch",
+        validate = findExample(_).isDefined
+      )
+      val fullScreen: Opt[Boolean] = toggle(name = "full-screen", default = Some(default.fullScreen),
+        descrYes = "Put into fullscreen mode",
+      )
+      val animate: Opt[Boolean] = toggle(default = Some(default.animate),
+        descrYes = "Animate the slider control",
+      )
+      val animatePeriod: Opt[Double] = opt(name = "animate-period", default = Some(default.animatePeriod),
+        descr = s"Animation period in seconds (default: ${default.animatePeriod})",
+        validate = x => x > 0.0
+      )
+      val animateFPS: Opt[Double] = opt(name = "animate-fps", default = Some(default.animateFPS),
+        descr = s"Animation frequency in frames per second (default: ${default.animateFPS})",
+        validate = x => x > 0.0
+      )
+      val animateTri: Opt[Boolean] = toggle(name = "animate-tri", default = Some(default.animateTri),
+        descrYes = "Animate as 'triangle', forward-backward",
+      )
+
+      verify()
+      val config: Config = Config(
+        widthOpt      = width  .toOption,
+        heightOpt     = height .toOption,
+        example       = example.toOption.flatMap(findExample),
+        fullScreen    = fullScreen(),
+        animate       = animate(),
+        animatePeriod = animatePeriod(),
+        animateFPS    = animateFPS(),
+        animateTri    = animateTri(),
+      )
+    }
 
     EventQueue.invokeLater { () =>
-      select(width, height)
+      val c = p.config
+      c.example match {
+        case Some(ex) => run(c, ex)
+        case None     => select(p.config)
+      }
     }
   }
 
-  def select(widthOpt: Option[Int], heightOpt: Option[Int]): Unit = {
+  def select(c: Config): Unit = {
     val root = new DefaultMutableTreeNode("root")
     P5Example.categories.foreach { cat =>
       val nCateg = new DefaultMutableTreeNode(cat)
@@ -55,9 +114,11 @@ object P5Examples {
             case n: DefaultMutableTreeNode =>
               n.getUserObject match {
                 case ex: P5Example =>
-                  run(widthOpt = widthOpt, heightOpt = heightOpt, ex = ex)
+                  run(c = c, ex = ex)
                 case _ =>
               }
+
+            case _ => throw new IllegalStateException()
           }
         }
       }
@@ -76,7 +137,7 @@ object P5Examples {
     }
   }
 
-  def run(widthOpt: Option[Int], heightOpt: Option[Int], ex: P5Example): Unit = {
+  def run(c: Config, ex: P5Example): Unit = {
     import de.sciss.lucre.canvas.graph._
     import de.sciss.lucre.expr.graph._
 
@@ -88,13 +149,13 @@ object P5Examples {
 //    val ex      = P5Example.Basics.Structure.Recursion
 //    val ex      = P5Example.Basics.Transform.Scale
     val a       = Var[Int]((ex.aMin + ex.aMax) >> 1)
-    val width   = widthOpt  .getOrElse(ex.defaultWidth)
-    val height  = heightOpt .getOrElse(ex.defaultHeight)
+    val width   = c.widthOpt  .getOrElse(ex.defaultWidth)
+    val height  = c.heightOpt .getOrElse(ex.defaultHeight)
     val g   = ex.make(a, width = width, height = height)
 //    println(g)
 
     var sq: Seq[Graphics.Elem] = Nil
-    var c: JComponent = null
+    var comp: JComponent = null
     var angleEx: Var.Expanded[T, Int] = null
 
     type S = InMemory
@@ -109,7 +170,8 @@ object P5Examples {
       sqEx.changed.react { implicit tx => upd =>
         tx.afterCommit(EventQueue.invokeLater { () =>
           sq = upd.now
-          c.repaint()
+          comp.repaint()
+          comp.getToolkit.sync()
         })
       }
       sq = sqEx.value
@@ -118,9 +180,9 @@ object P5Examples {
     //    de.sciss.lucre.Log.event.level = de.sciss.log.Level.Debug
 
     EventQueue.invokeLater { () =>
-      c = new JComponent {
+      comp = new JComponent {
         setPreferredSize(new awt.Dimension(width, height))
-        // setOpaque(true)
+        setOpaque(true)
 
         override def paintComponent(g: awt.Graphics): Unit = {
           val g2 = g.asInstanceOf[awt.Graphics2D]
@@ -139,22 +201,64 @@ object P5Examples {
           }
         }
       }
-      val sl = new JSlider(ex.aMin, ex.aMax)
-      sl.addChangeListener((_: ChangeEvent) => {
-        val v = sl.getValue
+
+      def setAngleFromUI(v: Int): Unit =
         system.step { implicit tx =>
           val vEx = new Const.Expanded[T, Int](v)
           angleEx.update(vEx)
         }
+
+      val sl = new JSlider(ex.aMin, ex.aMax)
+      sl.addChangeListener((_: ChangeEvent) => {
+        val v = sl.getValue
+        setAngleFromUI(v)
       })
-      new JFrame(ex.productPrefix) {
-        getContentPane.add(c, BorderLayout.CENTER)
-        getContentPane.add(sl, BorderLayout.SOUTH)
+      new JFrame { fr =>
+        if (c.fullScreen) {
+          setUndecorated(true)
+        } else {
+          setTitle(ex.productPrefix)
+        }
+
+        getContentPane.add(comp, BorderLayout.CENTER)
+        if (!c.fullScreen) getContentPane.add(sl, BorderLayout.SOUTH)
         pack()
-        setLocationRelativeTo(null)
+        if (!c.fullScreen) setLocationRelativeTo(null)
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
         setVisible(true)
+
+        if (c.fullScreen) toggleFullScreen(fr)
+      }
+
+      if (c.animate) {
+        val sch = new java.util.Timer
+        val dly = math.max(1, (1000 / c.animateFPS + 0.5).toInt)
+        val tt = new TimerTask {
+          private var frameCount  = 0
+          private val modulus     = if (c.animateTri) 2.0 else 1.0
+
+          override def run(): Unit = {
+            frameCount += 1
+            val time    = frameCount * dly * 0.001
+            val phase0  = (time / c.animatePeriod) % modulus
+            val phase   = if (phase0 < 1.0) phase0 else 2.0 - phase0
+            val v       = (phase.linLin(0, 1.0, ex.aMin, ex.aMax) + 0.5).toInt
+            setAngleFromUI(v)
+          }
+        }
+        sch.scheduleAtFixedRate(tt, dly, dly)
       }
     }
+  }
+
+  def toggleFullScreen(frame: javax.swing.JFrame): Unit = {
+    val gc = frame /*.peer*/.getGraphicsConfiguration
+    val sd = gc.getDevice
+    val w  = SwingUtilities.getWindowAncestor(frame /*.peer*/.getRootPane)
+    sd.setFullScreenWindow(if (sd.getFullScreenWindow == w) null else w)
+    frame.addKeyListener(new KeyAdapter {
+      override def keyPressed(e: KeyEvent): Unit =
+        if (e.getKeyCode == KeyEvent.VK_ESCAPE) sys.exit() // frame.dispose() // sd.setFullScreenWindow(null)
+    })
   }
 }
