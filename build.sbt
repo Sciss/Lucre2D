@@ -51,12 +51,46 @@ lazy val root = crossProject(JVMPlatform, JSPlatform).in(file("."))
     libraryDependencies ++= Seq(
       "org.rogach" %% "scallop" % deps.test.scallop % Test,    // command line option parsing
     ),
+    assembly / assemblyJarName := s"$baseName.jar",
   )
   .jsSettings(
     libraryDependencies ++= Seq(
     )
   )
   .settings(publishSettings)
+
+lazy val examples = crossProject(JVMPlatform).in(file("examples"))
+  .jvmSettings(commonJvmSettings)
+  .settings(assemblySettings)
+  .dependsOn(root)
+  .settings(
+    name                 := "examples",
+    scalaVersion         := "2.13.7",
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint"),
+    Compile / compile / scalacOptions ++= (if (/* !isDotty.value && */ scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil), // JDK >8 breaks API; skip scala-doc
+    assembly / assemblyJarName := s"$baseName.jar",
+    libraryDependencies ++= Seq(
+      "org.rogach" %%% "scallop" % deps.test.scallop,    // command line option parsing
+    ),
+  )
+
+lazy val assemblySettings = Seq(
+  // ---- assembly ----
+  assembly / test            := {},
+  assembly / target          := baseDirectory.value,
+  ThisBuild / assemblyMergeStrategy := {
+    case "logback.xml" => MergeStrategy.last
+    case PathList("org", "xmlpull", _ @ _*)              => MergeStrategy.first
+    case PathList("org", "w3c", "dom", "events", _ @ _*) => MergeStrategy.first // Apache Batik
+    case p @ PathList(ps @ _*) if ps.last endsWith "module-info.class" =>
+      println(s"DISCARD: $p")
+      MergeStrategy.discard // Jackson, Pi4J
+    case x =>
+      val old = (ThisBuild / assemblyMergeStrategy).value
+      old(x)
+  },
+  //  assembly / fullClasspath := (Test / fullClasspath).value // https://github.com/sbt/sbt-assembly/issues/27
+)
 
 // ---- publishing ----
 lazy val publishSettings = Seq(

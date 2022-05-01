@@ -28,11 +28,16 @@ The current version `v` is `"0.1.0"`.
 
 On the Desktop:
 
-    sbt rootJVM/Test/run
+    sbt examplesJVM/run
 
 Or to configure the Processing-inspired examples:
 
-    sbt 'rootJVM/Test/runMain de.sciss.lucre.canvas.P5Examples --help'
+    sbt 'examplesJVM/runMain de.sciss.lucre.canvas.P5Examples --help'
+
+Or to create a standalone:
+
+   sbt examplesJVM/assembly
+   java -Dsun.java2d.opengl=true -cp examples/jvm/Lucre2D.jar de.sciss.lucre.canvas.P5Examples --example tree --width 480 --height 480 --full-screen --animate --animate-tri --animate-fps 60
 
 In the browser: to-do!
 
