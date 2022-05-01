@@ -59,10 +59,10 @@ lazy val root = crossProject(JVMPlatform, JSPlatform).in(file("."))
   )
   .settings(publishSettings)
 
-lazy val examples = crossProject(JVMPlatform).in(file("examples"))
-  .jvmSettings(commonJvmSettings)
+lazy val examples = project.in(file("examples"))
+  .settings(commonJvmSettings)
   .settings(assemblySettings)
-  .dependsOn(root)
+  .dependsOn(root.jvm)
   .settings(
     name                 := "examples",
     scalaVersion         := "2.13.7",
